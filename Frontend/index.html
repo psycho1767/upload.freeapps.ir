@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Uploader</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="main">
+      <div class="container">
+        <h2>Upload</h2>
+        <input type="file" id="uploadFile" />
+        <input type="password" id="passwordUpload" placeholder="password" />
+        <input
+          type="number"
+          id="expireHours"
+          placeholder="hours (max 24)"
+          min="1"
+          max="24"
+        />
+        <button id="uploadBtn">Upload</button>
+
+        <h2>Download</h2>
+        <input type="text" id="downloadName" placeholder="name" />
+        <input type="password" id="passwordDownload" placeholder="password" />
+        <button id="downloadBtn">Download</button>
+
+        <p id="status"></p>
+      </div>
+    </div>
+
+    <div class="result" id="result">
+      <!-- output here -->
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
