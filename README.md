@@ -1,2 +1,2 @@
 # upload.freeapps.ir
-just a free opensource uploader
+just a free opensource uploader.
