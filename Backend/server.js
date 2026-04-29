@@ -96,7 +96,7 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
 
     expire_in_hours = Number(expire_in_hours) || 24;
     if (expire_in_hours <= 0 || expire_in_hours > 24) {
-      expire_in_hours = 24;
+      expire_in_hours = 1;
     }
 
     let data = readDB();
