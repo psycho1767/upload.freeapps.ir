@@ -2,11 +2,19 @@ const express = require("express");
 const fs = require("fs");
 const path = require("path");
 const multer = require("multer");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 const app = express();
 app.use(express.static(__dirname));
 app.use(express.static(path.join(__dirname, "../Frontend")));
-const PORT = 3000;
+
+const PORT = process.env.PORT || 3000;
+
+const MAX_STORAGE_BYTES =
+  parseInt(process.env.MAX_STORAGE) || 2 * 1024 * 1024 * 1024;
+
 console.log("===========================================");
 console.info("|  Server start at http://localhost:3000  |");
 console.log("===========================================");
@@ -33,6 +41,22 @@ app.use(express.static(__dirname));
 const readDB = () => JSON.parse(fs.readFileSync(dbPath));
 const writeDB = (data) =>
   fs.writeFileSync(dbPath, JSON.stringify(data, null, 2));
+
+const getTotalUsedStorage = () => {
+  let totalSize = 0;
+  try {
+    const files = fs.readdirSync(uploadsDir);
+    files.forEach((file) => {
+      const filePath = path.join(uploadsDir, file);
+      if (fs.statSync(filePath).isFile()) {
+        totalSize += fs.statSync(filePath).size;
+      }
+    });
+  } catch (error) {
+    console.error("Error calculating storage:", error);
+  }
+  return totalSize;
+};
 
 const syncFilesOnStart = () => {
   let data = readDB();
@@ -99,6 +123,17 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
       expire_in_hours = 1;
     }
 
+    const fileSize = req.file.size;
+    const currentUsedStorage = getTotalUsedStorage();
+    const remainingStorage = MAX_STORAGE_BYTES - currentUsedStorage;
+
+    if (fileSize > remainingStorage) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      return res.status(413).json({
+        error: "Storage limit exceeded. Server storage is full.",
+      });
+    }
+
     let data = readDB();
 
     const originalName = req.file.originalname;
@@ -124,12 +159,17 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
     data.push(record);
     writeDB(data);
 
+    const newUsedStorage = getTotalUsedStorage();
+    const newRemainingStorage = MAX_STORAGE_BYTES - newUsedStorage;
+
     res.json({
       success: true,
       name,
       originalName,
       link: `/?file=${name}`,
       expire_in_hours,
+      remainingStorage: newRemainingStorage,
+      totalStorage: MAX_STORAGE_BYTES,
     });
   } catch {
     res.status(500).json({ error: "server error" });
@@ -176,6 +216,17 @@ app.get("/api/info/:name", (req, res) => {
     name: file.name,
     originalName: file.originalName,
     passwordProtected: file.passwordProtected,
+  });
+});
+
+app.get("/api/storage-status", (req, res) => {
+  const currentUsedStorage = getTotalUsedStorage();
+  const remainingStorage = MAX_STORAGE_BYTES - currentUsedStorage;
+
+  res.json({
+    used: currentUsedStorage,
+    remaining: remainingStorage,
+    total: MAX_STORAGE_BYTES,
   });
 });
 

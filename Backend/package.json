@@ -9,6 +9,7 @@
   "author": "amirhossein roshani",
   "license": "ISC",
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "multer": "^2.1.1"
   }

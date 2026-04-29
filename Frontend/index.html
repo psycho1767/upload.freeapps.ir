@@ -2,7 +2,8 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Uploader</title>
+    <title>Freeapps uploader</title>
+    <link rel="shortcut icon" href="./siteIcon.png" type="image/png" />
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -14,24 +15,90 @@
         <input
           type="number"
           id="expireHours"
-          placeholder="hours (max 24)"
+          placeholder="hours (max 3) default 1h"
           min="1"
-          max="24"
+          max="3"
         />
         <button id="uploadBtn">Upload</button>
 
-        <h2>Download</h2>
-        <input type="text" id="downloadName" placeholder="name" />
-        <input type="password" id="passwordDownload" placeholder="password" />
-        <button id="downloadBtn">Download</button>
+        <!-- نوار پیشرفت -->
+        <div
+          style="
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            margin: 10px 0;
+          "
+        >
+          <div
+            id="progressBar"
+            style="
+              width: 0%;
+              height: 20px;
+              background-color: #4caf50;
+              border-radius: 5px;
+              text-align: center;
+              line-height: 20px;
+              color: white;
+              transition: width 0.2s;
+            "
+          ></div>
+        </div>
+
+        <!-- نمایش اطلاعات سرعت و زمان -->
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: #666;
+          "
+        >
+          <span id="speedDisplay">0 KB/s</span>
+          <span id="timeDisplay">00:00</span>
+        </div>
+
+        <div
+          class="storage-bar-container"
+          id="storageBarContainer"
+          style="display: none"
+        >
+          <div class="storage-label">
+            <span>available storage:</span>
+            <span id="storageText">Loading...</span>
+          </div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="storageProgressBar"></div>
+          </div>
+        </div>
+
+        <h2 style="display: none">Download</h2>
+        <input
+          style="display: none"
+          type="text"
+          id="downloadName"
+          placeholder="name"
+        />
+        <input
+          style="display: none"
+          type="password"
+          id="passwordDownload"
+          placeholder="password"
+        />
+        <button style="display: none" id="downloadBtn">Download</button>
 
         <p id="status"></p>
       </div>
     </div>
 
-    <div class="result" id="result">
-      <!-- output here -->
+    <div>
+      <div class="result" id="result"></div>
     </div>
+
+    <footer>
+      Made by
+      <a href="https://github.com/psycho1767" target="_blank">psycho1767</a>
+    </footer>
 
     <script src="./app.js"></script>
   </body>

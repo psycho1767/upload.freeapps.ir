@@ -54,18 +54,75 @@ const decryptFile = async (buffer, password) => {
 const copyText = (text) => {
   navigator.clipboard.writeText(text);
 };
+function resetUploadUI() {
+  const progressBar = document.getElementById("progressBar");
+  const speedDisplay = document.getElementById("speedDisplay");
+  const timeDisplay = document.getElementById("timeDisplay");
+  const uploadBtn = document.getElementById("uploadBtn");
+
+  // ریست کردن مقادیر
+  progressBar.style.width = "0%";
+  progressBar.textContent = "0%";
+  speedDisplay.textContent = "0 KB/s";
+  timeDisplay.textContent = "00:00";
+
+  // فعال کردن دوباره دکمه آپلود
+  if (uploadBtn) {
+    uploadBtn.disabled = false;
+  }
+}
 
 const showDownloadPopup = (data) => {
   const popup = document.createElement("div");
 
-  popup.innerHTML = `
-    <div class="popup">
-      <p>${data.originalName}</p>
-      ${data.passwordProtected ? `<input type="password" id="dlPass">` : ""}
-      <button id="dlBtn">Download</button>
-    </div>
-  `;
+  const popupDiv = document.createElement("div");
+  popupDiv.className = "popup";
 
+  const p = document.createElement("p");
+  p.textContent = data.originalName;
+  popupDiv.appendChild(p);
+
+  if (data.passwordProtected) {
+    const inputBox = document.createElement("div");
+    inputBox.id = "inputBox";
+    const inputHead = document.createElement("span");
+    inputHead.textContent = "Password :";
+
+    const input = document.createElement("input");
+    input.type = "password";
+    input.id = "dlPass";
+    inputBox.appendChild(inputHead);
+    inputBox.appendChild(input);
+    popupDiv.appendChild(inputBox);
+  }
+
+  const fatherEl = document.createElement("div");
+  fatherEl.id = "fatherElement";
+
+  const btn = document.createElement("button");
+  btn.id = "dlBtn";
+  btn.textContent = "Download";
+  // popupDiv.appendChild(btn);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.id = "closeBtn";
+  closeBtn.textContent = "Close";
+  closeBtn.onclick = () => {
+    resetUploadUI();
+    // document.getElementById("result").style.display = "none";
+    document.getElementById("result").style.display = "none";
+    window.history.replaceState({}, document.title, window.location.pathname);
+  };
+  // popupDiv.appendChild(closeBtn);
+
+  fatherEl.appendChild(btn);
+  fatherEl.appendChild(closeBtn);
+
+  popupDiv.appendChild(fatherEl);
+
+  popup.innerHTML = "";
+  popup.appendChild(popupDiv);
+  document.getElementById("result").style.display = "flex";
   // document.body.appendChild(popup);
   document.getElementById("result").appendChild(popup);
 
@@ -112,36 +169,117 @@ window.onload = async () => {
 };
 
 document.getElementById("uploadBtn").onclick = async () => {
-  const file = document.getElementById("uploadFile").files[0];
+  const fileInput = document.getElementById("uploadFile");
+  const file = fileInput.files[0];
   const pass = document.getElementById("passwordUpload").value;
   const hours = document.getElementById("expireHours").value;
 
   if (!file) return;
 
-  let finalFile;
+  const progressBar = document.getElementById("progressBar");
+  const speedDisplay = document.getElementById("speedDisplay");
+  const timeDisplay = document.getElementById("timeDisplay");
+  const uploadBtn = document.getElementById("uploadBtn");
 
-  if (pass) {
-    finalFile = await encryptFile(file, pass);
-  } else {
-    finalFile = new Uint8Array(await file.arrayBuffer());
+  uploadBtn.disabled = true;
+  progressBar.style.width = "0%";
+  progressBar.textContent = "0%";
+  speedDisplay.textContent = "0 KB/s";
+  timeDisplay.textContent = "00:00";
+
+  let finalFileBuffer;
+
+  try {
+    if (pass) {
+      finalFileBuffer = await encryptFile(file, pass);
+    } else {
+      finalFileBuffer = new Uint8Array(await file.arrayBuffer());
+    }
+  } catch (err) {
+    alert("خطا در پردازش فایل");
+    uploadBtn.disabled = false;
+    return;
   }
 
-  const form = new FormData();
-  form.append("file", new File([finalFile], file.name));
-  form.append("expire_in_hours", hours || 24);
-  form.append("passwordProtected", pass ? "true" : "false");
+  const totalSize = finalFileBuffer.length;
+  let loadedSize = 0;
+  let startTime = Date.now();
 
-  const res = await fetch("/api/upload", {
-    method: "POST",
-    body: form,
+  const xhr = new XMLHttpRequest();
+
+  xhr.upload.addEventListener("progress", (e) => {
+    if (e.lengthComputable) {
+      const percentComplete = Math.round((e.loaded / e.total) * 100);
+      progressBar.style.width = percentComplete + "%";
+      progressBar.textContent = percentComplete + "%";
+
+      const now = Date.now();
+      const timeDiff = (now - startTime) / 1000;
+
+      if (timeDiff > 0) {
+        const speedBytes = e.loaded / timeDiff;
+        speedDisplay.textContent = formatBytes(speedBytes) + "/s";
+
+        const remainingBytes = e.total - e.loaded;
+        const remainingTime = remainingBytes / speedBytes;
+        timeDisplay.textContent = formatTime(remainingTime);
+      }
+    }
   });
 
-  const data = await res.json();
+  xhr.addEventListener("load", () => {
+    if (xhr.status === 200) {
+      const response = JSON.parse(xhr.responseText);
+      if (response.success) {
+        showResultPopup(
+          response.originalName,
+          pass,
+          response.link,
+          response.expire_in_hours,
+        );
+        fileInput.value = "";
+      } else {
+        alert("خطا در آپلود");
+      }
+    } else {
+      alert("خطا در ارتباط");
+    }
+    uploadBtn.disabled = false;
+  });
 
-  if (data.success) {
-    showResultPopup(data.name, pass, data.link, data.expire_in_hours);
-  }
+  xhr.addEventListener("error", () => {
+    alert("خطا در شبکه");
+    uploadBtn.disabled = false;
+  });
+
+  const blob = new Blob([finalFileBuffer], { type: file.type });
+  const fileToSend = new File([blob], file.name, { type: file.type });
+
+  const form = new FormData();
+  form.append("file", fileToSend);
+  form.append("expire_in_hours", hours || 1);
+  form.append("passwordProtected", pass ? "true" : "false");
+
+  startTime = Date.now();
+  xhr.open("POST", "/api/upload");
+  xhr.send(form);
 };
+
+function formatBytes(bytes, decimals = 2) {
+  if (bytes === 0) return "0 Bytes";
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["Bytes", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
+}
+
+function formatTime(seconds) {
+  if (!isFinite(seconds) || seconds < 0) return "00:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
+}
 
 document.getElementById("downloadBtn").onclick = async () => {
   const name = document.getElementById("downloadName").value;
@@ -186,16 +324,41 @@ document.getElementById("downloadBtn").onclick = async () => {
 };
 
 const showResultPopup = (name, pass, link, hours) => {
-  const popup = document.createElement("div");
+  const firstdiv = document.createElement("div");
+  const popupbox = document.createElement("div");
+  popupbox.className = "popupbox";
+  popupbox.id = "popupbox";
   const container = document.createElement("div");
   container.className = "popup";
 
+  const row0 = document.createElement("div");
+  row0.id = "row0";
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.onclick = () => {
+    resetUploadUI();
+    document.getElementById("popupbox").remove();
+  };
+  svg.setAttribute("class", "CloseSvg");
+  svg.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+  svg.setAttribute("height", "24px");
+  svg.setAttribute("viewBox", "0 -960 960 960");
+  svg.setAttribute("width", "24px");
+  // svg.setAttribute("fill", "#FF0000");
+  const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+  path.setAttribute(
+    "d",
+    "m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z",
+  );
+  svg.appendChild(path);
+  row0.appendChild(svg);
+
   const row1 = document.createElement("p");
   row1.textContent = `Name: ${name}`;
-  const btn1 = document.createElement("button");
-  btn1.textContent = "copy";
-  btn1.onclick = () => (window.copyText = copyText(name));
-  row1.appendChild(btn1);
+  row1.style.marginBottom = "20px";
+  // const btn1 = document.createElement("button");
+  // btn1.textContent = "copy";
+  // btn1.onclick = () => (window.copyText = copyText(name));
+  // row1.appendChild(btn1);
 
   const row2 = document.createElement("p");
   row2.textContent = `Password: ${pass || "none"}`;
@@ -205,7 +368,7 @@ const showResultPopup = (name, pass, link, hours) => {
   row2.appendChild(btn2);
 
   const row3 = document.createElement("p");
-  row3.textContent = `Link: ${location.origin + link}`;
+  row3.textContent = location.origin + link;
   const btn3 = document.createElement("button");
   btn3.textContent = "copy";
   btn3.onclick = () => (window.copyText = copyText(location.origin + link));
@@ -214,13 +377,15 @@ const showResultPopup = (name, pass, link, hours) => {
   const timer = document.createElement("p");
   timer.id = "timer";
 
+  container.appendChild(row0);
   container.appendChild(row1);
   container.appendChild(row2);
   container.appendChild(row3);
   container.appendChild(timer);
-  popup.appendChild(container);
+  popupbox.appendChild(container);
+  firstdiv.appendChild(popupbox);
 
-  document.body.appendChild(popup);
+  document.body.appendChild(firstdiv);
 
   let time = hours * 3600;
 
@@ -230,8 +395,53 @@ const showResultPopup = (name, pass, link, hours) => {
     const m = Math.floor((time % 3600) / 60);
     const s = time % 60;
 
-    popup.querySelector("#timer").innerText = `${h}h ${m}m ${s}s`;
+    firstdiv.querySelector("#timer").innerText = `${h}h ${m}m ${s}s`;
 
     if (time <= 0) clearInterval(interval);
   }, 1000);
 };
+
+async function updateStorageUI() {
+  try {
+    const response = await fetch("/api/storage-status");
+    if (!response.ok) throw new Error("Failed to fetch storage status");
+
+    const data = await response.json();
+    const { used, remaining, total } = data;
+
+    const formatBytes = (bytes) => {
+      if (bytes === 0) return "0 Bytes";
+      const k = 1024;
+      const sizes = ["Bytes", "KB", "MB", "GB"];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+    };
+
+    const usedGB = formatBytes(used);
+    const remainingGB = formatBytes(remaining);
+    const totalGB = formatBytes(total);
+
+    const percentageUsed = (used / total) * 100;
+    const percentageRemaining = 100 - percentageUsed;
+
+    document.getElementById("storageText").innerText =
+      `${remainingGB} from ${totalGB}`;
+
+    const progressBar = document.getElementById("storageProgressBar");
+    progressBar.style.width = `${percentageUsed}%`;
+
+    if (percentageRemaining < 10) {
+      progressBar.classList.add("low");
+    } else {
+      progressBar.classList.remove("low");
+    }
+
+    document.getElementById("storageBarContainer").style.display = "block";
+  } catch (error) {
+    console.error("Error updating storage UI:", error);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  updateStorageUI();
+});
