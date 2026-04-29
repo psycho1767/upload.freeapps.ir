@@ -74,7 +74,6 @@ function resetUploadUI() {
 
 const showDownloadPopup = (data) => {
   const popup = document.createElement("div");
-
   const popupDiv = document.createElement("div");
   popupDiv.className = "popup";
 
@@ -96,47 +95,118 @@ const showDownloadPopup = (data) => {
     popupDiv.appendChild(inputBox);
   }
 
+  const progressContainer = document.createElement("div");
+  progressContainer.id = "downloadProgressContainer";
+  progressContainer.style.width = "100%";
+  progressContainer.style.height = "5px";
+  progressContainer.style.backgroundColor = "#e0e0e0";
+  progressContainer.style.marginTop = "10px";
+  progressContainer.style.display = "none";
+
+  const progressBar = document.createElement("div");
+  progressBar.id = "downloadProgressBar";
+  progressBar.style.width = "0%";
+  progressBar.style.height = "100%";
+  progressBar.style.backgroundColor = "#4caf50";
+  progressBar.style.transition = "width 0.2s ease";
+
+  progressContainer.appendChild(progressBar);
+  popupDiv.appendChild(progressContainer);
+
+  const statusText = document.createElement("p");
+  statusText.id = "downloadStatusText";
+  statusText.style.fontSize = "12px";
+  statusText.style.color = "#666";
+  statusText.style.marginTop = "5px";
+  statusText.style.height = "15px";
+  popupDiv.appendChild(statusText);
+
   const fatherEl = document.createElement("div");
   fatherEl.id = "fatherElement";
 
   const btn = document.createElement("button");
   btn.id = "dlBtn";
   btn.textContent = "Download";
-  // popupDiv.appendChild(btn);
 
   const closeBtn = document.createElement("button");
   closeBtn.id = "closeBtn";
   closeBtn.textContent = "Close";
   closeBtn.onclick = () => {
     resetUploadUI();
-    // document.getElementById("result").style.display = "none";
     document.getElementById("result").style.display = "none";
     window.history.replaceState({}, document.title, window.location.pathname);
   };
-  // popupDiv.appendChild(closeBtn);
 
   fatherEl.appendChild(btn);
   fatherEl.appendChild(closeBtn);
-
   popupDiv.appendChild(fatherEl);
 
   popup.innerHTML = "";
   popup.appendChild(popupDiv);
   document.getElementById("result").style.display = "flex";
-  // document.body.appendChild(popup);
   document.getElementById("result").appendChild(popup);
 
   document.getElementById("dlBtn").onclick = async () => {
     const pass = document.getElementById("dlPass")?.value;
-
-    const res = await fetch("/api/file/" + data.name);
-    if (!res.ok) return alert("error");
-
-    const buffer = await res.arrayBuffer();
-
-    let finalBuffer;
+    progressContainer.style.display = "block";
+    progressBar.style.width = "0%";
+    statusText.textContent = "Starting download...";
 
     try {
+      const res = await fetch("/api/file/" + data.name);
+      if (!res.ok) {
+        alert("error");
+        return;
+      }
+
+      const totalSize = parseInt(res.headers.get("Content-Length")) || 0;
+      let receivedSize = 0;
+      const chunks = [];
+      const startTime = Date.now();
+
+      const reader = res.body.getReader();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunks.push(value);
+        receivedSize += value.length;
+
+        const currentTime = Date.now();
+        const elapsedTime = (currentTime - startTime) / 1000;
+        const speed = receivedSize / elapsedTime;
+        const remainingSize = totalSize - receivedSize;
+        const eta = speed > 0 ? remainingSize / speed : 0;
+
+        const formatSpeed = (bytes) => {
+          if (bytes < 1024) return bytes + " B/s";
+          if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB/s";
+          return (bytes / (1024 * 1024)).toFixed(2) + " MB/s";
+        };
+
+        const formatTime = (seconds) => {
+          if (seconds < 60) return Math.ceil(seconds) + "s";
+          return Math.floor(seconds / 60) + "m " + Math.ceil(seconds % 60) + "s";
+        };
+
+        if (totalSize > 0) {
+          const percent = (receivedSize / totalSize) * 100;
+          progressBar.style.width = percent + "%";
+          statusText.textContent = `${formatSpeed(speed)} | ETA: ${formatTime(eta)}`;
+        }
+      }
+
+      const fullBuffer = new Uint8Array(receivedSize);
+      let offset = 0;
+      for (const chunk of chunks) {
+        fullBuffer.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      const buffer = fullBuffer.buffer;
+      let finalBuffer;
+
       if (data.passwordProtected) {
         finalBuffer = await decryptFile(buffer, pass);
       } else {
@@ -148,11 +218,18 @@ const showDownloadPopup = (data) => {
       a.href = URL.createObjectURL(blob);
       a.download = data.originalName;
       a.click();
-    } catch {
-      alert("wrong password");
+
+      statusText.textContent = "Download Complete";
+      progressBar.style.backgroundColor = "#4caf50";
+
+    } catch (err) {
+      alert("wrong password or download failed");
+      statusText.textContent = "Error";
+      progressBar.style.backgroundColor = "#f44336";
     }
   };
 };
+
 
 window.onload = async () => {
   const params = new URLSearchParams(location.search);
@@ -292,10 +369,39 @@ document.getElementById("downloadBtn").onclick = async () => {
     return;
   }
 
-  const buffer = await res.arrayBuffer();
+  const progressBar = document.getElementById("progressContainer");
+  if (progressBar) progressBar.style.display = "block";
+
+  const totalSize = parseInt(res.headers.get("Content-Length")) || 0;
+  let receivedSize = 0;
+
+  const reader = res.body.getReader();
+  const chunks = [];
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    chunks.push(value);
+    receivedSize += value.length;
+
+    if (progressBar && totalSize > 0) {
+      const percent = (receivedSize / totalSize) * 100;
+      progressBar.style.width = percent + "%";
+    }
+  }
+
+  // ترکیب تمام قطعات در یک آرایه یکپارچه
+  const fullBuffer = new Uint8Array(receivedSize);
+  let offset = 0;
+  for (const chunk of chunks) {
+    fullBuffer.set(chunk, offset);
+    offset += chunk.length;
+  }
+
+  const buffer = fullBuffer.buffer; // تبدیل به ArrayBuffer برای رمزگشایی
 
   const pass = prompt("Enter password (if any)");
-
   let finalBuffer;
 
   try {
@@ -313,13 +419,18 @@ document.getElementById("downloadBtn").onclick = async () => {
       if (match) fileName = match[1];
     }
 
-    const blob = new Blob([decrypted]);
+    // نکته: در کد قبلی تو نوشته بودی decrypted ولی متغیر finalBuffer بود
+    const blob = new Blob([finalBuffer]);
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = fileName;
     a.click();
-  } catch {
+
+    // مخفی کردن نوار بعد از دانلود
+    if (progressBar) progressBar.style.display = "none";
+  } catch (err) {
     alert("wrong password");
+    if (progressBar) progressBar.style.display = "none";
   }
 };
 
