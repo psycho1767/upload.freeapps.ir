@@ -15,7 +15,6 @@ body {
   overflow: hidden;
 }
 
-/* subtle animated glow background */
 body::before {
   content: "";
   position: absolute;
@@ -218,6 +217,11 @@ button:active {
   align-items: center;
   gap: 5px;
   width: 80%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  margin: 0;
 }
 
 .popupbox {
@@ -311,7 +315,7 @@ footer a:hover {
     width 0.3s ease,
     background-color 0.3s ease;
 }
-/* وقتی فضا کم میشه قرمز بشه */
+
 .progress-bar-fill.low {
   background-color: #f44336;
 }
@@ -336,5 +340,68 @@ footer a:hover {
 
   .result {
     width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  body {
+    overflow: auto;
+  }
+
+  .main {
+    padding: 15px;
+    align-items: flex-start;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 100%;
+    padding: 20px;
+    border-radius: 12px;
+  }
+
+  input,
+  button {
+    font-size: 16px;
+  }
+
+  .popup {
+    width: 90%;
+    max-width: 320px;
+  }
+
+  .popup > p {
+    font-size: 13px;
+    word-break: break-word;
+    white-space: normal;
+  }
+
+  #fatherElement {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  #inputBox {
+    width: 100%;
+  }
+
+  footer {
+    font-size: 12px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 600px) {
+  body::before,
+  body::after {
+    display: none;
+  }
+
+  .container {
+    backdrop-filter: blur(8px);
+  }
+
+  .popup {
+    backdrop-filter: blur(10px);
   }
 }

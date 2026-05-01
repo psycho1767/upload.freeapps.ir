@@ -52,8 +52,31 @@ const decryptFile = async (buffer, password) => {
 };
 
 const copyText = (text) => {
-  navigator.clipboard.writeText(text);
+  if (!text) return;
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
 };
+
+const fallbackCopy = (text) => {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  try {
+    document.execCommand("copy");
+  } catch (err) {}
+
+  document.body.removeChild(textarea);
+};
+
 function resetUploadUI() {
   const progressBar = document.getElementById("progressBar");
   const speedDisplay = document.getElementById("speedDisplay");
@@ -79,6 +102,7 @@ const showDownloadPopup = (data) => {
 
   const p = document.createElement("p");
   p.textContent = data.originalName;
+  p.title = data.originalName;
   popupDiv.appendChild(p);
 
   if (data.passwordProtected) {
@@ -187,7 +211,9 @@ const showDownloadPopup = (data) => {
 
         const formatTime = (seconds) => {
           if (seconds < 60) return Math.ceil(seconds) + "s";
-          return Math.floor(seconds / 60) + "m " + Math.ceil(seconds % 60) + "s";
+          return (
+            Math.floor(seconds / 60) + "m " + Math.ceil(seconds % 60) + "s"
+          );
         };
 
         if (totalSize > 0) {
@@ -221,7 +247,6 @@ const showDownloadPopup = (data) => {
 
       statusText.textContent = "Download Complete";
       progressBar.style.backgroundColor = "#4caf50";
-
     } catch (err) {
       alert("wrong password or download failed");
       statusText.textContent = "Error";
@@ -229,7 +254,6 @@ const showDownloadPopup = (data) => {
     }
   };
 };
-
 
 window.onload = async () => {
   const params = new URLSearchParams(location.search);
@@ -464,7 +488,7 @@ const showResultPopup = (name, pass, link, hours) => {
   row0.appendChild(svg);
 
   const row1 = document.createElement("p");
-  row1.textContent = `Name: ${name}`;
+  row1.textContent = name;
   row1.style.marginBottom = "20px";
   // const btn1 = document.createElement("button");
   // btn1.textContent = "copy";
@@ -555,4 +579,26 @@ async function updateStorageUI() {
 
 document.addEventListener("DOMContentLoaded", () => {
   updateStorageUI();
+});
+
+document.addEventListener("paste", (event) => {
+  const items = (event.clipboardData || event.originalEvent.clipboardData)
+    .items;
+  let file = null;
+
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].kind === "file") {
+      file = items[i].getAsFile();
+      break;
+    }
+  }
+
+  if (file) {
+    const fileInput = document.getElementById("uploadFile");
+    if (fileInput) {
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+    }
+  }
 });
