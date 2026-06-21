@@ -7,6 +7,68 @@
   outline: none;
 }
 
+@font-face {
+  font-family: 'YekanBakh';
+  src: url('yekan/fonts/woff2/YekanBakhFaNum-Regular.woff2') format('woff2'),
+       url('yekan/fonts/woff/YekanBakhFaNum-Regular.woff') format('woff');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  src: url('yekan/fonts/woff2/YekanBakhFaNum-Light.woff2') format('woff2'),
+       url('yekan/fonts/woff/YekanBakhFaNum-Light.woff') format('woff');
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  src: url('yekan/fonts/woff2/YekanBakhFaNum-SemiBold.woff2') format('woff2'),
+       url('yekan/fonts/woff/YekanBakhFaNum-SemiBold.woff') format('woff');
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  src: url('yekan/fonts/woff2/YekanBakhFaNum-Bold.woff2') format('woff2'),
+       url('yekan/fonts/woff/YekanBakhFaNum-Bold.woff') format('woff');
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  src: url('yekan/fonts/woff2/YekanBakhFaNum-Black.woff2') format('woff2'),
+       url('yekan/fonts/woff/YekanBakhFaNum-Black.woff') format('woff');
+  font-weight: 900;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  src: url('yekan/fonts/woff2/YekanBakhFaNum-ExtraBold.woff2') format('woff2'),
+       url('yekan/fonts/woff/YekanBakhFaNum-ExtraBold.woff') format('woff');
+  font-weight: 800;
+  font-style: normal;
+}
+
+/* ── RTL / Farsi Font ── */
+[dir="rtl"] body,
+[dir="rtl"] h2,
+[dir="rtl"] p,
+[dir="rtl"] span,
+[dir="rtl"] input,
+[dir="rtl"] button,
+[dir="rtl"] label,
+[dir="rtl"] .subtitle,
+[dir="rtl"] .logo span,
+[dir="rtl"] footer {
+  font-family: 'YekanBakh', sans-serif;
+}
+
 /* ── Dark Theme (default) ── */
 :root {
   --bg-primary: #0a0e1a;
