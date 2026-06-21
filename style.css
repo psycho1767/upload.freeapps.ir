@@ -4,6 +4,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  outline: none;
 }
 
 /* ── Dark Theme (default) ── */
@@ -62,6 +63,14 @@ body {
   min-height: 100dvh;
   overflow-x: hidden;
   transition: background 0.3s ease, color 0.3s ease;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+h2, p, span, .subtitle, .logo span, .file-name, .popup-value span, footer, footer a {
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: default;
 }
 
 /* ── Background Glows ── */
@@ -253,6 +262,9 @@ body {
   transition: all var(--transition);
   background: rgba(255, 255, 255, 0.01);
   margin-bottom: 20px;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
 }
 
 [data-theme="light"] .drop-zone {
