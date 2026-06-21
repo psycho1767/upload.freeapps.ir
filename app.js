@@ -670,7 +670,7 @@ const showResultPopup = (name, pass, link, days) => {
   wrapper.appendChild(popup);
   document.body.appendChild(wrapper);
 
-  let time = days * 86400;
+  let time = (Number(days) || 1) * 86400;
   const interval = setInterval(() => {
     time--;
     const d = Math.floor(time / 86400);
