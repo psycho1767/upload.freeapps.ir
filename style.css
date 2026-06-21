@@ -71,6 +71,8 @@ h2, p, span, .subtitle, .logo span, .file-name, .popup-value span, footer, foote
   user-select: text;
   -webkit-user-select: text;
   cursor: default;
+  caret-color: transparent;
+  -webkit-user-modify: read-only;
 }
 
 /* ── Background Glows ── */
