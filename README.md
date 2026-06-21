@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Frontend/logo.svg" width="100" />
+<img src="logo.svg" width="100" />
 
 # 🚀 Freeapps Uploader V2
 
@@ -26,6 +26,7 @@
 | 🔑 **Password Protection** | Optional password lock on any file |
 | 📊 **Storage Monitor** | Real-time server storage usage bar |
 | 🌍 **Bilingual UI** | English & Farsi with RTL support |
+| 🔤 **YekanBakh Font** | Beautiful Persian typography for Farsi mode |
 | 🌙 **Dark / Light Mode** | Toggle between themes |
 | 📱 **Fully Responsive** | Works on desktop, tablet, and mobile |
 | ⚡ **Upload Progress** | Live speed, ETA, and progress bar |
@@ -93,8 +94,8 @@ upload.freeapps.ir/
 ├── index.html             # Main page
 ├── app.js                 # Client-side logic & encryption
 ├── style.css              # Theming & responsive styles
-├── logo.svg               # App logo
-├── siteIcon.png
+├── logo.svg               # App logo & favicon
+├── yekan/                 # YekanBakh font (Farsi)
 ├── .gitignore
 └── README.md
 ```
@@ -168,6 +169,7 @@ Built with ❤️ by [psycho1767](https://github.com/psycho1767)
 | 🔑 **محافظت با رمز عبور** | قفل رمز عبور اختیاری روی هر فایل |
 | 📊 **مانیتور فضای ذخیره‌سازی** | نوار نمایش مصرف فضای سرور به صورت لحظه‌ای |
 | 🌍 **رابط دوزبانه** | انگلیسی و فارسی با پشتیبانی RTL |
+| 🔤 **فونت یکان** | تایپوگرافی زیبای فارسی برای حالت فارسی |
 | 🌙 **حالت تاریک / روشن** | جابه‌جایی بین تم‌ها |
 | 📱 **کاملاً واکنش‌گرا** | کار روی دسکتاپ، تبلت و موبایل |
 | ⚡ **پیشرفت آپلود** | سرعت زنده، زمان باقی‌مانده و نوار پیشرفت |
