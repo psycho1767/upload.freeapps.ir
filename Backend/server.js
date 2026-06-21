@@ -65,7 +65,7 @@ const syncFilesOnStart = () => {
 };
 
 const isExpired = (file) => {
-  return Date.now() > file.timestamp + file.expire_in_hours * 3600000;
+  return Date.now() > file.timestamp + file.expire_in_days * 86400000;
 };
 
 const autoCleanExpiredFiles = () => {
@@ -116,11 +116,11 @@ syncFilesOnStart();
 
 app.post("/api/upload", upload.single("file"), (req, res) => {
   try {
-    let { expire_in_hours, passwordProtected } = req.body;
+    let { expire_in_days, passwordProtected } = req.body;
 
-    expire_in_hours = Number(expire_in_hours) || 24;
-    if (expire_in_hours <= 0 || expire_in_hours > 24) {
-      expire_in_hours = 1;
+    expire_in_days = Number(expire_in_days) || 1;
+    if (expire_in_days <= 0 || expire_in_days > 7) {
+      expire_in_days = 1;
     }
 
     const fileSize = req.file.size;
@@ -136,6 +136,10 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
 
     let data = readDB();
 
+    req.file.originalname = Buffer.from(
+      req.file.originalname,
+      "latin1",
+    ).toString("utf8");
     const originalName = req.file.originalname;
     const name = generateName(
       originalName,
@@ -152,7 +156,7 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
       originalName,
       path: "uploads/" + newFileName,
       timestamp: Date.now(),
-      expire_in_hours,
+      expire_in_days,
       passwordProtected: passwordProtected === "true",
     };
 
@@ -167,7 +171,7 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
       name,
       originalName,
       link: `/?file=${name}`,
-      expire_in_hours,
+      expire_in_days,
       remainingStorage: newRemainingStorage,
       totalStorage: MAX_STORAGE_BYTES,
     });
@@ -178,7 +182,8 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
 
 app.get("/api/file/:name", (req, res) => {
   try {
-    const name = req.params.name;
+    const name = decodeURIComponent(req.params.name);
+
     const data = readDB();
     const file = data.find((f) => f.name === name);
 
@@ -194,12 +199,16 @@ app.get("/api/file/:name", (req, res) => {
 
     const fullPath = path.join(__dirname, file.path);
 
+    const encodedOriginalName = encodeURIComponent(file.originalName);
+
     res.setHeader(
       "Content-Disposition",
-      `attachment; filename="${file.originalName}"`,
+      `attachment; filename="${encodedOriginalName}"; filename*=UTF-8''${encodedOriginalName}`,
     );
+
     res.sendFile(fullPath);
-  } catch {
+  } catch (error) {
+    console.error(error);
     res.status(500).end();
   }
 });
