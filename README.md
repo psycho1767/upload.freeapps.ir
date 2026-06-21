@@ -52,8 +52,8 @@
 # Clone the repository
 git clone https://github.com/psycho1767/upload.freeapps.ir.git
 
-# Navigate to backend
-cd Backend
+# Navigate to server
+cd server
 
 # Install dependencies
 npm install
@@ -71,7 +71,7 @@ node server.js
 
 ## ⚙️ Environment Variables
 
-Create a `.env` file in the `Backend/` directory:
+Create a `.env` file in the `server/` directory:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -84,18 +84,17 @@ Create a `.env` file in the `Backend/` directory:
 
 ```
 upload.freeapps.ir/
-├── Backend/
+├── server/
 │   ├── server.js          # Express API server
 │   ├── files.json         # File metadata database
 │   ├── uploads/           # Encrypted file storage
 │   ├── .env               # Environment config
 │   └── package.json
-├── Frontend/
-│   ├── index.html         # Main page
-│   ├── app.js             # Client-side logic & encryption
-│   ├── style.css          # Theming & responsive styles
-│   ├── logo.svg           # App logo
-│   └── siteIcon.png
+├── index.html             # Main page
+├── app.js                 # Client-side logic & encryption
+├── style.css              # Theming & responsive styles
+├── logo.svg               # App logo
+├── siteIcon.png
 ├── .gitignore
 └── README.md
 ```
@@ -195,8 +194,8 @@ Built with ❤️ by [psycho1767](https://github.com/psycho1767)
 # کلون کردن مخزن
 git clone https://github.com/psycho1767/upload.freeapps.ir.git
 
-# رفتن به پوشه بک‌اند
-cd Backend
+# رفتن به پوشه سرور
+cd server
 
 # نصب وابستگی‌ها
 npm install
@@ -214,7 +213,7 @@ node server.js
 
 ## ⚙️ متغیرهای محیطی
 
-فایل `.env` را در پوشه `Backend/` ایجاد کنید:
+فایل `.env` را در پوشه `server/` ایجاد کنید:
 
 | متغیر | پیش‌فرض | توضیحات |
 |--------|---------|---------|

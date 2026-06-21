@@ -1,4 +1,4 @@
-Backend/node_modules/
-Backend/uploads/
-Backend/files.json
+server/node_modules/
+server/uploads/
+server/files.json
 .aider*
